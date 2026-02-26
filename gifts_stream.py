@@ -3,9 +3,13 @@ import pandas as pd
 from pathlib import Path
 from urllib.parse import quote_plus
 
-st.title("Givers of Federal gifts Wikidata Search")
+st.title("Federal Gifts Wikidata Search")
 
 DATA_FILENAME = 'data/givers_to_lookup.csv'
+
+st.subheader("Instructions")
+st.write("""If you cannot find a Wikidata ID for an entry, enter NIL. If an entry contains multiple givers (so and so and spouse), enter FAMILY. """)
+
 
 def get_coding_data(DATA_FILENAME):
     """Grab data from a CSV file.
@@ -25,14 +29,6 @@ def save_edits(df, column, filepath):
     df.to_csv(filepath, index=False)
     st.success("Saved successfully.")
 
-def show_screen(current_row, remaining_indices):
-    st.write("Original giver information: " + str(current_row["giver_orig"]))
-    st.write("Abbreviated giver information: " + str(current_row["giver_name"]))
-    st.write(f"Current index: {st.session_state.idx + 1} out of {len(remaining_indices)}")
-    st.text_input("WikidataID", key="wikidata_input")
-    search_term = quote_plus(str(current_row["giver_name"]))
-    url = f"https://www.wikidata.org/w/index.php?search={search_term}&language=en&title=Special%3ASearch&ns0=1"
-    st.write(f"[Search on Wikidata]({url})")
 
 def init_session_state():
     defaults = {
@@ -47,12 +43,22 @@ def init_session_state():
             st.session_state[key] = val
 
 def show_skip(remaining_indices):
+    st.header("Move to specific row in dataframe")
     skip_input = st.text_input("Skip to entry", key=f"skip_entry_{st.session_state.skip_key_counter}")
     if st.button("Go") and skip_input:
         st.session_state.idx = max(0, min(int(skip_input) - 1, len(remaining_indices) - 1))
         st.session_state.skip_key_counter += 1
         st.rerun()
 
+def show_screen(current_row, remaining_indices):
+    st.header("Information to search")
+    st.write("Original giver information: " + str(current_row["giver_orig"]))
+    st.write("Abbreviated giver information: " + str(current_row["giver_name"]))
+    st.write(f"Current index: {st.session_state.idx + 1} out of {len(remaining_indices)}")
+    st.text_input("WikidataID", key="wikidata_input")
+    search_term = quote_plus(str(current_row["giver_name"]))
+    url = f"https://www.wikidata.org/w/index.php?search={search_term}&language=en&title=Special%3ASearch&ns0=1"
+    st.write(f"[Search on Wikidata]({url})")
 
 def show_navigation(current_original_idx, remaining_indices, gifts_df):
     col1, col2, col3, col4 = st.columns(4)
