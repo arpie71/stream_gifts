@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from urllib.parse import quote_plus
-import gspread
+#import gspread
 from streamlit_gsheets import GSheetsConnection
 
 st.title("Federal Gifts Wikidata Search")
