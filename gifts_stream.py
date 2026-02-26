@@ -30,7 +30,8 @@ def get_coding_data():
     #gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
     #sh = gc.open("givers_to_lookup")
     #df = pd.DataFrame(sh.sheet1.get_all_records())
-    df = conn.read(spreadsheet=st.secrets["connections.gsheets"]["spreadsheet"])
+    #df = conn.read(spreadsheet=st.secrets["connections.gsheets"]["spreadsheet"])
+    df = conn.read()
     return df
 #    return df, sh
 
