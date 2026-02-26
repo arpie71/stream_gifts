@@ -24,11 +24,11 @@ st.write("""If you cannot find a Wikidata ID for an entry, enter NIL. If an entr
 #    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
 #    df = pd.read_csv(DATA_FILENAME)
 #    return df
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 def get_coding_data():
     #gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
     #sh = gc.open("givers_to_lookup")
-    conn = st.connection("gsheets", type=GSheetsConnection)
     #df = pd.DataFrame(sh.sheet1.get_all_records())
     df = conn.read()
     return df
@@ -41,10 +41,11 @@ def get_coding_data():
 #    df.to_csv(filepath, index=False)
 #    st.success("Saved successfully.")
 
-def save_edits(sh, df, column):
+def save_edits(df, column):
     for idx, val in st.session_state.edits.items():
         df.at[idx, column] = val
-    sh.sheet1.update([df.columns.values.tolist()] + df.values.tolist())
+    #sh.sheet1.update([df.columns.values.tolist()] + df.values.tolist())
+    conn.update(data=df)
     st.success("Saved successfully.")
     
 def init_session_state():
@@ -95,14 +96,14 @@ def show_navigation(current_original_idx, remaining_indices, gifts_df):
             st.rerun()
     with col4:
         if st.button("Save"):
-            save_edits(gifts_df,'WikidataID',DATA_FILENAME)
+            save_edits(gifts_df,'WikidataID')
             #for idx, val in st.session_state.edits.items():
             #    gifts_df.at[idx, "WikidataID"] = val
             #gifts_df.to_csv("data/givers_to_lookup.csv", index=False)
             #st.success("Saved successfully.")
 
-gifts_df = get_coding_data(DATA_FILENAME)
-
+#gifts_df = get_coding_data(DATA_FILENAME)
+gifts_df = get_coding_data()
 remaining_df = gifts_df[
     gifts_df["WikidataID"].isna() |
     (gifts_df["WikidataID"].astype(str).str.strip() == "")
