@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 from urllib.parse import quote_plus
 import gspread
-from google.oauth2.service_account import Credentials
+from streamlit_gsheets import GSheetsConnection
 
 st.title("Federal Gifts Wikidata Search")
 
@@ -26,10 +26,13 @@ st.write("""If you cannot find a Wikidata ID for an entry, enter NIL. If an entr
 #    return df
 
 def get_coding_data():
-    gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
-    sh = gc.open("givers_to_lookup")
-    df = pd.DataFrame(sh.sheet1.get_all_records())
-    return df, sh
+    #gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+    #sh = gc.open("givers_to_lookup")
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    #df = pd.DataFrame(sh.sheet1.get_all_records())
+    df = conn.read()
+    return df
+#    return df, sh
 
 
 #def save_edits(df, column, filepath):
