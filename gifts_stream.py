@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from urllib.parse import quote_plus
+import gspread
+from google.oauth2.service_account import Credentials
 
 st.title("Federal Gifts Wikidata Search")
 
@@ -11,25 +13,37 @@ st.subheader("Instructions")
 st.write("""If you cannot find a Wikidata ID for an entry, enter NIL. If an entry contains multiple givers (so and so and spouse), enter FAMILY. """)
 
 
-def get_coding_data(DATA_FILENAME):
-    """Grab data from a CSV file.
+#def get_coding_data(DATA_FILENAME):
+#    """Grab data from a CSV file.
+#
+#    This uses caching to avoid having to read the file every time. If we were
+#    reading from an HTTP endpoint instead of a file, it's a good idea to set
+#    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
+#    """
+#
+#    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
+#    df = pd.read_csv(DATA_FILENAME)
+#    return df
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+def get_coding_data():
+    gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+    sh = gc.open("givers_to_lookup")
+    df = pd.DataFrame(sh.sheet1.get_all_records())
+    return df, sh
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    df = pd.read_csv(DATA_FILENAME)
-    return df
 
-def save_edits(df, column, filepath):
+#def save_edits(df, column, filepath):
+#    for idx, val in st.session_state.edits.items():
+#        df.at[idx, column] = val
+#    df.to_csv(filepath, index=False)
+#    st.success("Saved successfully.")
+
+def save_edits(sh, df, column):
     for idx, val in st.session_state.edits.items():
         df.at[idx, column] = val
-    df.to_csv(filepath, index=False)
+    sh.sheet1.update([df.columns.values.tolist()] + df.values.tolist())
     st.success("Saved successfully.")
-
-
+    
 def init_session_state():
     defaults = {
         "idx": 0,
