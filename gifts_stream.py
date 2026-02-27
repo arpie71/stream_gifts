@@ -4,43 +4,70 @@ from pathlib import Path
 from urllib.parse import quote_plus
 #import gspread
 from streamlit_gsheets import GSheetsConnection
+st.set_page_config(layout="wide")
 
 st.title("Federal Gifts Wikidata Search")
 
 DATA_FILENAME = 'data/givers_to_lookup.csv'
 
-st.subheader("Instructions")
-st.write("""If you cannot find a Wikidata ID for an entry, enter NIL. If an entry contains multiple givers (so and so and spouse), enter FAMILY. """)
+instructions = """Please look up the listed entity on Wikidata. Entities might be a person, family, country or organization.
 
+Examples:  
+> Jimmy Carter: type in Q23685  
+> European Commission: type in Q8880  
+> Serbia: type in Q403  
 
-#def get_coding_data(DATA_FILENAME):
-#    """Grab data from a CSV file.
-#
-#    This uses caching to avoid having to read the file every time. If we were
-#    reading from an HTTP endpoint instead of a file, it's a good idea to set
-#    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-#    """
-#
-#    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-#    df = pd.read_csv(DATA_FILENAME)
-#    return df
+Only enter a valid Wikidata ID in the WikidataID field with the following exceptions:
+
+> If an entry contains multiple givers that are part of a family (for example, President and Mrs Elena Ceausescu), type in FAMILY  
+> If an entry contains multiple givers that are not part of a family (for example, James Bond and Q), type in GROUP  
+> If the Wikidata match is unclear (for example, multiple branches of the Hungarian Ministry of Foreign Affairs, each with their own Wiki ID, type in UNCLEAR  
+> If you cannot find a Wikidata ID for an entry (the individual has no WIkipedia page, for example), type in NIL
+ """ 
+    
+#**Original giver information** shows the full entry which might include title and country. 
+
+#**Abbreviated giver information** shows only the parsed value. 
+
+#st.subheader("Instructions", help="Please look up the listed entity on [Wikidata](https://www.wikidata.org). Entities might be a person, family, country or organization.")
+
+#move_to_side = st.toggle("Move to sidebar")
+#activated = st.toggle("Show instructions", value=not move_to_side, disabled=move_to_side)
+#activated = st.toggle("Hide instructions", value=False)
+#if not activated:
+#    st.write(instructions)
+
+col1, col2 = st.columns([2.04, 1], vertical_alignment="center")
+
+with col1:
+    st.subheader(
+        "Instructions",
+        help="Please look up the listed entity on Wikidata. "
+             "Entities might be a person, family, country or organization."
+    )
+
+with col2:
+    hide_instructions = st.toggle("Hide", value=False, help="Hide instructions")
+
+left, right = st.columns([3, 1])
+
+if not hide_instructions:
+    with left:
+        st.info(instructions)
+
+#if activated and not move_to_side:
+#    st.write(instructions)
+    
+#if move_to_side:
+#    with st.sidebar:
+#        st.subheader("Instructions", help="Please look up the listed entity on [Wikidata](https://www.wikidata.org).") 
+#        st.write(instructions)
+
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def get_coding_data():
-    #gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
-    #sh = gc.open("givers_to_lookup")
-    #df = pd.DataFrame(sh.sheet1.get_all_records())
-    #df = conn.read(spreadsheet=st.secrets["connections.gsheets"]["spreadsheet"])
     df = conn.read()
     return df
-#    return df, sh
-
-
-#def save_edits(df, column, filepath):
-#    for idx, val in st.session_state.edits.items():
-#        df.at[idx, column] = val
-#    df.to_csv(filepath, index=False)
-#    st.success("Saved successfully.")
 
 def save_edits(df, column):
     for idx, val in st.session_state.edits.items():
@@ -68,35 +95,36 @@ def show_skip(remaining_indices):
         st.session_state.idx = max(0, min(int(skip_input) - 1, len(remaining_indices) - 1))
         st.session_state.skip_key_counter += 1
         st.rerun()
+    st.write(f"Current index: {st.session_state.idx + 1} out of {len(remaining_indices)}")
 
 def show_screen(current_row, remaining_indices):
     st.header("Information to search")
     st.write("Original giver information: " + str(current_row["giver_orig"]))
     st.write("Abbreviated giver information: " + str(current_row["giver_name"]))
-    st.write(f"Current index: {st.session_state.idx + 1} out of {len(remaining_indices)}")
-    st.text_input("WikidataID", key="wikidata_input")
+    #st.write(f"Current index: {st.session_state.idx + 1} out of {len(remaining_indices)}")
     search_term = quote_plus(str(current_row["giver_name"]))
     url = f"https://www.wikidata.org/w/index.php?search={search_term}&language=en&title=Special%3ASearch&ns0=1"
     st.write(f"[Search on Wikidata]({url})")
+    st.text_input("WikidataID", key="wikidata_input", width=200)
 
 def show_navigation(current_original_idx, remaining_indices, gifts_df):
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4,col5 = st.columns([1,1,1,1,.5])
     with col1:
-        if st.button("Previous") and st.session_state.idx > 0:
+        if st.button("Previous", help="Move to previous entry in file") and st.session_state.idx > 0:
             st.session_state.idx -= 1
             st.rerun()
     with col2:
-        if st.button("Submit & Next"):
+        if st.button("Submit & Next", help="Submit Wikidata ID and move to next entry."):
             st.session_state.edits[current_original_idx] = st.session_state.wikidata_input
             if st.session_state.idx < len(remaining_indices) - 1:
                 st.session_state.idx += 1
             st.rerun()
     with col3:
-        if st.button("Next") and st.session_state.idx < len(remaining_indices) - 1:
+        if st.button("Next", help = "Move to next entry in file") and st.session_state.idx < len(remaining_indices) - 1:
             st.session_state.idx += 1
             st.rerun()
     with col4:
-        if st.button("Save"):
+        if st.button("Save", help="Write changes to file"):
             save_edits(gifts_df,'WikidataID')
             #for idx, val in st.session_state.edits.items():
             #    gifts_df.at[idx, "WikidataID"] = val
@@ -128,7 +156,9 @@ if st.session_state.last_loaded_idx != current_original_idx:
         
     st.session_state.last_loaded_idx = current_original_idx
 
-show_skip(remaining_indices)
+with st.sidebar:
+    #st.write("show sidebar")
+    show_skip(remaining_indices)
 
 current_row = gifts_df.loc[current_original_idx]
 
