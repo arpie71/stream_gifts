@@ -69,10 +69,12 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 def get_coding_data(student):
     df = conn.read(worksheet=student)
+    df['WikidataID'] = df['WikidataID'].astype(str)
     return df
 
 def save_edits(df, column,student):
     for idx, val in st.session_state.edits.items():
+        st.write(idx)
         df.at[idx, column] = val
     #sh.sheet1.update([df.columns.values.tolist()] + df.values.tolist())
     conn.update(data=df,worksheet=student)
