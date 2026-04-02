@@ -68,17 +68,18 @@ if not hide_instructions:
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def get_coding_data(student):
-    df = conn.read(worksheet=student)
-    df['WikidataID'] = df['WikidataID'].astype(str)
+    df = conn.read(worksheet=student, ttl=0)
+    df['WikidataID'] = df['WikidataID'].astype(str).str.replace("nan", "")
     return df
 
 def save_edits(df, column,student):
     for idx, val in st.session_state.edits.items():
-        st.write(idx)
         df.at[idx, column] = val
     #sh.sheet1.update([df.columns.values.tolist()] + df.values.tolist())
     conn.update(data=df,worksheet=student)
+    st.session_state.edits = {}
     st.success("Saved successfully.")
+    st.rerun()
     
 def init_session_state():
     defaults = {
@@ -136,6 +137,7 @@ def show_navigation(current_original_idx, remaining_indices, gifts_df):
             #gifts_df.to_csv("data/givers_to_lookup.csv", index=False)
             #st.success("Saved successfully.")
 
+init_session_state()
 with st.sidebar:
     #st.write("show sidebar")
     #show_skip(remaining_indices)
@@ -143,28 +145,37 @@ with st.sidebar:
 
 #gifts_df = get_coding_data(DATA_FILENAME)
 gifts_df = get_coding_data(student)
+
 remaining_df = gifts_df[
     gifts_df["WikidataID"].isna() |
-    (gifts_df["WikidataID"].astype(str).str.strip() == "")
+    (gifts_df["WikidataID"].astype(str).str.strip() == "") |
+    (gifts_df["WikidataID"].astype(str).str.lower() == "nan")
 ]
 
-init_session_state()
+#init_session_state()
+
+
+if "idx" not in st.session_state:
+    st.session_state.idx = 0
 
 remaining_indices = remaining_df.index.tolist()
+if not remaining_indices or st.session_state.idx > len(remaining_indices):
+    st.session_state.idx = 0
+
 current_original_idx = remaining_indices[st.session_state.idx]
 current_row = gifts_df.loc[current_original_idx]
 
 # Only preload when index changes
 if st.session_state.last_loaded_idx != current_original_idx:
-    st.session_state.last_loaded_idx = current_original_idx
     if current_original_idx in st.session_state.edits:
         st.session_state.wikidata_input = st.session_state.edits[current_original_idx]
-    elif pd.notna(current_row.get("WikidataID", None)):
+    elif current_row.get("WikidataID", "").strip():
         st.session_state.wikidata_input = current_row["WikidataID"]
     else:
         st.session_state.wikidata_input = ""
-        
+    
     st.session_state.last_loaded_idx = current_original_idx
+
 
 with st.sidebar:
     #st.write("show sidebar")
