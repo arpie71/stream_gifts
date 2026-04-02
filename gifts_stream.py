@@ -63,7 +63,7 @@ if not hide_instructions:
 #        st.subheader("Instructions", help="Please look up the listed entity on [Wikidata](https://www.wikidata.org).") 
 #        st.write(instructions)
 
-student = st.selectbox("Select your worksheet:", ["Carlos", "Gabe", "Laura", "Skylar", "Vicky"])
+#student = st.selectbox("Select your worksheet:", ["Carlos", "Gabe", "Laura", "Skylar", "Vicky"])
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -99,7 +99,8 @@ def show_skip(remaining_indices):
         st.rerun()
     st.write(f"Current index: {st.session_state.idx + 1} out of {len(remaining_indices)}")
 
-def show_screen(current_row, remaining_indices):
+def show_screen(current_row, remaining_indices,student):
+    st.header(f"Welcome :blue[{student}]")
     st.header("Information to search")
     st.write("Original giver information: " + str(current_row["giver_orig"]))
     st.write("Abbreviated giver information: " + str(current_row["giver_name"]))
@@ -133,6 +134,11 @@ def show_navigation(current_original_idx, remaining_indices, gifts_df):
             #gifts_df.to_csv("data/givers_to_lookup.csv", index=False)
             #st.success("Saved successfully.")
 
+with st.sidebar:
+    #st.write("show sidebar")
+    #show_skip(remaining_indices)
+    student = st.selectbox("Select your worksheet:", ["Carlos", "Gabe", "Laura", "Skylar", "Vicky"],index=None,placeholder="Select your worksheet")
+
 #gifts_df = get_coding_data(DATA_FILENAME)
 gifts_df = get_coding_data(student)
 remaining_df = gifts_df[
@@ -164,5 +170,5 @@ with st.sidebar:
 
 current_row = gifts_df.loc[current_original_idx]
 
-show_screen(current_row, remaining_indices)
+show_screen(current_row, remaining_indices, student)
 show_navigation(current_original_idx, remaining_indices, gifts_df)
