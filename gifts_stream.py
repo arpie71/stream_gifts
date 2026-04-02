@@ -63,17 +63,19 @@ if not hide_instructions:
 #        st.subheader("Instructions", help="Please look up the listed entity on [Wikidata](https://www.wikidata.org).") 
 #        st.write(instructions)
 
+student = st.selectbox("Select your worksheet:", ["Carlos", "Gabe", "Laura", "Skylar", "Vicky"])
+
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-def get_coding_data():
-    df = conn.read()
+def get_coding_data(student):
+    df = conn.read(worksheet=student)
     return df
 
-def save_edits(df, column):
+def save_edits(df, column,student):
     for idx, val in st.session_state.edits.items():
         df.at[idx, column] = val
     #sh.sheet1.update([df.columns.values.tolist()] + df.values.tolist())
-    conn.update(data=df)
+    conn.update(data=df,worksheet=student)
     st.success("Saved successfully.")
     
 def init_session_state():
@@ -125,14 +127,14 @@ def show_navigation(current_original_idx, remaining_indices, gifts_df):
             st.rerun()
     with col4:
         if st.button("Save", help="Write changes to file"):
-            save_edits(gifts_df,'WikidataID')
+            save_edits(gifts_df,'WikidataID',student)
             #for idx, val in st.session_state.edits.items():
             #    gifts_df.at[idx, "WikidataID"] = val
             #gifts_df.to_csv("data/givers_to_lookup.csv", index=False)
             #st.success("Saved successfully.")
 
 #gifts_df = get_coding_data(DATA_FILENAME)
-gifts_df = get_coding_data()
+gifts_df = get_coding_data(student)
 remaining_df = gifts_df[
     gifts_df["WikidataID"].isna() |
     (gifts_df["WikidataID"].astype(str).str.strip() == "")
