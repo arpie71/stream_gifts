@@ -152,7 +152,7 @@ remaining_df = gifts_df[
     (gifts_df["WikidataID"].astype(str).str.strip() == "") |
     (gifts_df["WikidataID"].astype(str).str.lower() == "nan")
 ]
-
+st.write(len(remaining_df))
 #init_session_state()
 
 
@@ -170,7 +170,7 @@ current_row = gifts_df.loc[current_original_idx]
 if st.session_state.last_loaded_idx != current_original_idx:
     if current_original_idx in st.session_state.edits:
         st.session_state.wikidata_input = st.session_state.edits[current_original_idx]
-    elif str(current_row.get("WikidataID", "")).strip():
+    elif current_row.get("WikidataID", "").strip():
         st.session_state.wikidata_input = current_row["WikidataID"]
     else:
         st.session_state.wikidata_input = ""
