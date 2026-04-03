@@ -165,7 +165,7 @@ if not remaining_indices or st.session_state.idx > len(remaining_indices):
 
 current_original_idx = remaining_indices[st.session_state.idx]
 current_row = gifts_df.loc[current_original_idx].astype(str)
-
+st.write(gifts_df.head())
 st.write(current_row)
 
 # Only preload when index changes
