@@ -69,8 +69,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 def get_coding_data(student):
     df = conn.read(worksheet=student, ttl=0)
-    df['WikidataID'] = df['WikidataID'].astype(str)
-    df['WikidataID'] = df['WikidataID'].str.replace("nan", "")
+    df['WikidataID'] = df['WikidataID'].apply(lambda x: "" if x is None or pd.isna(x) else str(x)).str.replace("nan", "")
     return df
 
 def save_edits(df, column,student):
