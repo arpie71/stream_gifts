@@ -164,7 +164,7 @@ if not remaining_indices or st.session_state.idx > len(remaining_indices):
     st.session_state.idx = 0
 
 current_original_idx = remaining_indices[st.session_state.idx]
-current_row = gifts_df.loc[current_original_idx]
+current_row = gifts_df.loc[current_original_idx].astype(str)
 
 # Only preload when index changes
 if st.session_state.last_loaded_idx != current_original_idx:
