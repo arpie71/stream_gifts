@@ -121,7 +121,7 @@ init_session_state()
 with st.sidebar:
     #st.write("show sidebar")
     #show_skip(remaining_indices)
-    student = st.selectbox("Select your worksheet:", ["Carlos", "Gabe", "Laura", "Skylar", "Vicky"],index=None,placeholder="Select your worksheet")
+    student = st.selectbox("Select your worksheet:", ["Carlos", "Laura", "Enne", "Roan","Olivia","Sachi"],index=None,placeholder="Select your worksheet")
 
 #gifts_df = get_coding_data(DATA_FILENAME)
 gifts_df = get_coding_data(student)
